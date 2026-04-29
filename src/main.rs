@@ -4,5 +4,8 @@ use services::date;
 
 fn main() {
     println!("Hello, world!");
-    println!("Today is day {} of the week.", date::get_weekday());
+    let weekday = date::get_weekday();
+    println!("Today is day {} of the week.", weekday);
+    println!("Reading config...");
+    let config = services::configs::init().unwrap();
 }

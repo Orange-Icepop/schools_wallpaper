@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
-use std::fs;
-use std::path::Path;
 use std::io::Result;
+use std::path::{Path, PathBuf};
+use std::{env, fs};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Config {
@@ -10,22 +10,54 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn new(wallpaper_dir: String, override_wallpaper: String) -> Self {
+    pub fn new(wallpaper_dir: &str, override_wallpaper: &str) -> Self {
         Self {
-            wallpaper_dir,
-            override_wallpaper,
+            wallpaper_dir: wallpaper_dir.into(),
+            override_wallpaper: override_wallpaper.into(),
         }
     }
-}
 
-fn default_config() -> Config {
-    Config {
-        wallpaper_dir: String::from(""),
-        override_wallpaper: String::from(""),
+    pub fn default_config() -> Self {
+        Self::new("", "")
     }
 }
 
-fn write_config(config: &Config, path: &str) -> Result<()> {
-    let config_str = toml::to_string_pretty(config).unwrap();
-    fs::write(path, config_str)
+fn write_config(config: &Config) -> Result<()> {
+    let config_str = toml::to_string_pretty(config).unwrap();//TODO: handle error
+    fs::write(env::current_dir()?.join("config.toml"), config_str)
+}
+
+pub fn init() -> Result<Config> {
+    let config_path = env::current_dir()?.join("config.toml");
+    if !config_path.exists() {
+        let default_config = Config::default_config();
+        write_config(&default_config)?;
+        create_dir_structure(&env::current_dir()?)?;
+        Ok(default_config)
+    }
+    else {
+        let config_str = fs::read_to_string(config_path)?;
+        let config: Config = toml::from_str(&config_str).unwrap(); //TODO: handle error
+        create_dir_structure(&PathBuf::from(&config.wallpaper_dir))?;
+        Ok(config)
+    }
+}
+
+fn create_dir_structure(path: &PathBuf) -> Result<()> {
+    let conf = path.join("imgs");
+    create_dir(&conf.join("1"))?;
+    create_dir(&conf.join("2"))?;
+    create_dir(&conf.join("3"))?;
+    create_dir(&conf.join("4"))?;
+    create_dir(&conf.join("5"))?;
+    create_dir(&conf.join("6"))?;
+    create_dir(&conf.join("7"))?;
+    Ok(())
+}
+
+fn create_dir(path: &PathBuf) -> Result<()> {
+    if !Path::new(path).exists() {
+        fs::create_dir_all(path)?;
+    }
+    Ok(())
 }
