@@ -35,7 +35,7 @@ fn write_config(config: &Config) -> Result<()> {
     fs::write(env::current_dir()?.join("config.toml"), config_str)
 }
 
-pub fn init() -> Result<Config> {
+pub fn read_all_config() -> Result<Config> {
     let config_path = env::current_dir()?.join("config.toml");
     if !config_path.exists() {
         let mut default_config = Config::default_config();
@@ -54,8 +54,8 @@ pub fn init() -> Result<Config> {
     }
 }
 
-fn create_dir_structure(path: &PathBuf) -> Result<()> {
-    let conf = path.join("imgs");
+fn create_dir_structure(path: impl AsRef<Path>) -> Result<()> {
+    let conf = path.as_ref().join("imgs");
     create_dir(&conf.join("1"))?;
     create_dir(&conf.join("2"))?;
     create_dir(&conf.join("3"))?;
@@ -66,8 +66,8 @@ fn create_dir_structure(path: &PathBuf) -> Result<()> {
     Ok(())
 }
 
-fn create_dir(path: &PathBuf) -> Result<()> {
-    if !Path::new(path).exists() {
+fn create_dir(path: impl AsRef<Path>) -> Result<()> {
+    if !Path::new(path.as_ref()).exists() {
         fs::create_dir_all(path)?;
     }
     Ok(())

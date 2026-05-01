@@ -7,7 +7,7 @@ use crate::handle::ResultExt;
 fn main() {
     println!("Hello, world!");
     println!("Reading config...");
-    let config = configs::init().unwrap_or_log();
+    let config = configs::read_all_config().unwrap_or_log();
     if config.use_override_wallpaper {
         println!("Using override wallpaper: {}", config.override_wallpaper);
         wallpaper::set_wallpaper(&config.override_wallpaper).unwrap_or_log();
