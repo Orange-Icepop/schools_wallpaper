@@ -13,7 +13,11 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn new(wallpaper_dir: &str, use_override_wallpaper: bool, override_wallpaper: &str) -> Self {
+    pub fn new(
+        wallpaper_dir: &str,
+        use_override_wallpaper: bool,
+        override_wallpaper: &str,
+    ) -> Self {
         Self {
             wallpaper_dir: wallpaper_dir.into(),
             use_override_wallpaper,
@@ -34,14 +38,17 @@ fn write_config(config: &Config) -> Result<()> {
 pub fn init() -> Result<Config> {
     let config_path = env::current_dir()?.join("config.toml");
     if !config_path.exists() {
-        let default_config = Config::default_config();
+        let mut default_config = Config::default_config();
         write_config(&default_config)?;
         create_dir_structure(&env::current_dir()?)?;
+        default_config.wallpaper_dir = env::current_dir()?.to_string_lossy().to_string();
         Ok(default_config)
-    }
-    else {
+    } else {
         let config_str = fs::read_to_string(config_path)?;
-        let config: Config = toml::from_str(&config_str).unwrap_or_log();
+        let mut config: Config = toml::from_str(&config_str).unwrap_or_log();
+        if config.wallpaper_dir.is_empty() {
+            config.wallpaper_dir = env::current_dir()?.to_string_lossy().to_string();
+        }
         create_dir_structure(&PathBuf::from(&config.wallpaper_dir))?;
         Ok(config)
     }
