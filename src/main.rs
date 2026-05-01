@@ -15,5 +15,5 @@ fn main() {
     }
     let weekday = date::get_weekday();
     println!("Today is day {} of the week.", weekday);
-
+    
 }
