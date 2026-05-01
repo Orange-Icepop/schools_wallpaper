@@ -1,33 +1,36 @@
-use windows::{
-    core::PCWSTR,
-    Win32::{
-        Foundation::BOOL,
-        UI::WindowsAndMessaging::{SystemParametersInfoW, SPI_SETDESKWALLPAPER, SPIF_UPDATEINIFILE, SPIF_SENDWININICHANGE},
-    },
-};
 use std::ffi::OsStr;
 use std::os::windows::ffi::OsStrExt;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
+use windows::{
+    Win32::{
+        Foundation::BOOL,
+        UI::WindowsAndMessaging::{
+            SPI_SETDESKWALLPAPER, SPIF_SENDWININICHANGE, SPIF_UPDATEINIFILE, SystemParametersInfoW,
+        },
+    },
+    core::PCWSTR,
+};
 
-fn set_wallpaper(image_path: &str) -> Result<()> {
-    // 将路径转换为 UTF-16 并以 null 结尾
-    let path_wide: Vec<u16> = OsStr::new(image_path)
+pub fn set_wallpaper(image_path: impl AsRef<Path>) -> Result<(), String> {
+    let wide: Vec<u16> = image_path
+        .as_ref()
+        .as_os_str()
         .encode_wide()
-        .chain(std::iter::once(0))
+        .chain(Some(0))
         .collect();
 
     unsafe {
-        // 参数：SPI_SETDESKWALLPAPER, 0, 路径指针, SPIF_UPDATEINIFILE | SPIF_SENDWININICHANGE
         let result = SystemParametersInfoW(
             SPI_SETDESKWALLPAPER,
             0,
-            Some(path_wide.as_ptr() as _),
-            // 立即更新并广播更改通知
-            windows::Win32::UI::WindowsAndMessaging::SPIF_UPDATEINIFILE
-                | windows::Win32::UI::WindowsAndMessaging::SPIF_SENDWININICHANGE,
+            Some(wide.as_ptr() as _),
+            SPIF_UPDATEINIFILE | SPIF_SENDWININICHANGE,
         );
         if result == BOOL::from(false) {
-            return Err("Unable to set wallpaper using winapi".into());
+            return Err(format!(
+                "Unable to set wallpaper at {}",
+                image_path.as_ref().display()
+            ));
         }
     }
     Ok(())

@@ -15,5 +15,6 @@ fn main() {
     }
     let weekday = date::get_weekday();
     println!("Today is day {} of the week.", weekday);
-    
+    wallpaper::set_today_wallpaper(&config.wallpaper_dir, weekday).unwrap_or_log();
+    println!("Wallpaper set successfully.");
 }

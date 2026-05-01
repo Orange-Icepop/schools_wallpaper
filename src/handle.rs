@@ -7,8 +7,8 @@ impl<T, E: std::fmt::Debug> ResultExt<T> for Result<T, E> {
         match self {
             Ok(value) => value,
             Err(e) => {
-                eprintln!("Error: {:?}", e);
-                panic!("Terminating due to error.");
+                eprintln!("Error: {}", &e);
+                panic!("Terminating due to error: {:?}.", &e);
             }
         }
     }
