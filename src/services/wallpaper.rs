@@ -1,6 +1,8 @@
+#[cfg(target_os = "windows")]
 mod windows;
 
 use std::{fs, fs::DirEntry, path::Path, path::PathBuf};
+use rand;
 
 pub fn set_today_wallpaper(img_root_dir: &str, date: u32) -> Result<()> {
     if date == 0 || date > 7 {
