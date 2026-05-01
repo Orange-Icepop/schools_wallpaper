@@ -2,7 +2,8 @@
 mod windows;
 
 use rand;
-use std::{fs, fs::DirEntry, path::Path, path::PathBuf};
+use std::fs;
+use std::path::{Path, PathBuf};
 
 pub fn set_today_wallpaper(img_root_dir: &str, date: u32) -> Result<()> {
     if date == 0 || date > 7 {
