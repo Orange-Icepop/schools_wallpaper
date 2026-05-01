@@ -33,7 +33,7 @@ fn random_wallpaper(dir: impl AsRef<Path>) -> Result<PathBuf> {
         ));
     }
 
-    let random_index = rand::random::<usize>() % entries.len();
+    let random_index = rand::random::<usize>() % entries.len() + 1;
     Ok(entries[random_index].path())
 }
 
