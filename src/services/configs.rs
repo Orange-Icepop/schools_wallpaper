@@ -3,27 +3,31 @@ use std::io::Result;
 use std::path::{Path, PathBuf};
 use std::{env, fs};
 
+use crate::handle::ResultExt;
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Config {
     pub wallpaper_dir: String,
+    pub use_override_wallpaper: bool,
     pub override_wallpaper: String,
 }
 
 impl Config {
-    pub fn new(wallpaper_dir: &str, override_wallpaper: &str) -> Self {
+    pub fn new(wallpaper_dir: &str, use_override_wallpaper: bool, override_wallpaper: &str) -> Self {
         Self {
             wallpaper_dir: wallpaper_dir.into(),
+            use_override_wallpaper,
             override_wallpaper: override_wallpaper.into(),
         }
     }
 
     pub fn default_config() -> Self {
-        Self::new("", "")
+        Self::new("", false, "")
     }
 }
 
 fn write_config(config: &Config) -> Result<()> {
-    let config_str = toml::to_string_pretty(config).unwrap();//TODO: handle error
+    let config_str = toml::to_string_pretty(config).unwrap_or_log();
     fs::write(env::current_dir()?.join("config.toml"), config_str)
 }
 
@@ -37,7 +41,7 @@ pub fn init() -> Result<Config> {
     }
     else {
         let config_str = fs::read_to_string(config_path)?;
-        let config: Config = toml::from_str(&config_str).unwrap(); //TODO: handle error
+        let config: Config = toml::from_str(&config_str).unwrap_or_log();
         create_dir_structure(&PathBuf::from(&config.wallpaper_dir))?;
         Ok(config)
     }

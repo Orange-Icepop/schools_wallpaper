@@ -1,11 +1,19 @@
 mod services;
+mod handle;
 
-use services::date;
+use services::*;
+use crate::handle::ResultExt;
 
 fn main() {
     println!("Hello, world!");
+    println!("Reading config...");
+    let config = configs::init().unwrap_or_log();
+    if config.use_override_wallpaper {
+        println!("Using override wallpaper: {}", config.override_wallpaper);
+        wallpaper::set_wallpaper(&config.override_wallpaper).unwrap_or_log();
+        return;
+    }
     let weekday = date::get_weekday();
     println!("Today is day {} of the week.", weekday);
-    println!("Reading config...");
-    let config = services::configs::init().unwrap();
+
 }
