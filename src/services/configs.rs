@@ -24,33 +24,42 @@ impl Config {
             override_wallpaper: override_wallpaper.into(),
         }
     }
+}
 
-    pub fn default_config() -> Self {
+impl Default for Config {
+    fn default() -> Self {
         Self::new("", false, "")
     }
 }
 
 fn write_config(config: &Config) -> Result<()> {
-    let config_str = toml::to_string_pretty(config).unwrap_or_log();
-    fs::write(env::current_dir()?.join("config.toml"), config_str)
+    let config_res = toml::to_string_pretty(config);
+    match config_res {
+        Ok(config_str) => fs::write(env::current_dir()?.join("config.toml"), config_str),
+        Err(e) => Err(format!("Failed to serialize config: {:?}", e).into()),
+    }
 }
 
 pub fn read_all_config() -> Result<Config> {
     let config_path = env::current_dir()?.join("config.toml");
     if !config_path.exists() {
-        let mut default_config = Config::default_config();
+        let mut default_config = Config::default();
         write_config(&default_config)?;
         create_dir_structure(&env::current_dir()?)?;
         default_config.wallpaper_dir = env::current_dir()?.to_string_lossy().to_string();
         Ok(default_config)
     } else {
         let config_str = fs::read_to_string(config_path)?;
-        let mut config: Config = toml::from_str(&config_str).unwrap_or_log();
-        if config.wallpaper_dir.is_empty() {
-            config.wallpaper_dir = env::current_dir()?.to_string_lossy().to_string();
+        let mut config_res = toml::from_str(&config_str);
+        if let Ok(mut config) = config_res {
+            if config.wallpaper_dir.is_empty() {
+                config.wallpaper_dir = env::current_dir()?.to_string_lossy().to_string();
+            }
+            create_dir_structure(&PathBuf::from(&config.wallpaper_dir))?;
+            Ok(config)
+        } else {
+            Err(format!("Failed to deserialize config: {:?}", config_res.unwrap_err()).into())
         }
-        create_dir_structure(&PathBuf::from(&config.wallpaper_dir))?;
-        Ok(config)
     }
 }
 
