@@ -1,9 +1,7 @@
+use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
-use std::io::Result;
 use std::path::{Path, PathBuf};
 use std::{env, fs};
-
-use crate::handle::ResultExt;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Config {
@@ -33,11 +31,11 @@ impl Default for Config {
 }
 
 fn write_config(config: &Config) -> Result<()> {
-    let config_res = toml::to_string_pretty(config);
-    match config_res {
-        Ok(config_str) => fs::write(env::current_dir()?.join("config.toml"), config_str),
-        Err(e) => Err(format!("Failed to serialize config: {:?}", e).into()),
-    }
+    let config_str = toml::to_string_pretty(config)
+        .with_context(|| "Failed to serialize config")?;
+    fs::write(env::current_dir()?.join("config.toml"), config_str)
+        .with_context(|| "Failed to write config file")?;
+    Ok(())
 }
 
 pub fn read_all_config() -> Result<Config> {
@@ -49,17 +47,15 @@ pub fn read_all_config() -> Result<Config> {
         default_config.wallpaper_dir = env::current_dir()?.to_string_lossy().to_string();
         Ok(default_config)
     } else {
-        let config_str = fs::read_to_string(config_path)?;
-        let mut config_res = toml::from_str(&config_str);
-        if let Ok(mut config) = config_res {
-            if config.wallpaper_dir.is_empty() {
-                config.wallpaper_dir = env::current_dir()?.to_string_lossy().to_string();
-            }
-            create_dir_structure(&PathBuf::from(&config.wallpaper_dir))?;
-            Ok(config)
-        } else {
-            Err(format!("Failed to deserialize config: {:?}", config_res.unwrap_err()).into())
+        let config_str =
+            fs::read_to_string(config_path).with_context(|| "Failed to read config file")?;
+        let mut config: Config = toml::from_str(&config_str)
+            .with_context(|| "Failed to parse config file")?;
+        if config.wallpaper_dir.is_empty() {
+            config.wallpaper_dir = env::current_dir()?.to_string_lossy().to_string();
         }
+        create_dir_structure(&PathBuf::from(&config.wallpaper_dir))?;
+        Ok(config)
     }
 }
 
